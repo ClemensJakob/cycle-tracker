@@ -62,8 +62,8 @@ describe('TrackPage', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Avg Mood')).toBeInTheDocument()
-      expect(screen.getByText('Avg Libido')).toBeInTheDocument()
+      expect(screen.getByText('Cycle Phase')).toBeInTheDocument()
+      expect(screen.getByText('Trends')).toBeInTheDocument()
     })
   })
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { storageClient, type TrackingStorageClient } from './storage-client'
 import { makeTrackingEntry, type TrackingEntry, type TrackingEntryObject } from './tracking'
-import { TrackingContext } from './useTracking'
+import { TrackingContext, type TrackingContextValue } from './useTracking'
 
 type TrackingProviderProps = {
   children: ReactNode
