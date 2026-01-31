@@ -1,0 +1,5 @@
+# TypeScript check
+npm run typecheck
+
+# Run lint-staged (ESLint + Prettier on staged files)
+npx lint-staged
