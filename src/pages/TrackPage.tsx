@@ -12,15 +12,18 @@ const VISIBLE_DAYS = 10 // Number of days we can scroll back (not including toda
 export function TrackPage() {
   const { getEntry, updateEntry, isLoading } = useTracking()
   const todayKey = formatDateKey(new Date())
-  const [selectedDateKey, setSelectedDateKey] = useState<string>(todayKey)
+  const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-  // Scroll to the right on mount
+  // Scroll to the right on mount and open today's form with animation
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth
     }
-  }, [isLoading])
+    // Trigger slide-in animation after mount
+    const timer = setTimeout(() => setSelectedDateKey(todayKey), 50)
+    return () => clearTimeout(timer)
+  }, [isLoading, todayKey])
 
   if (isLoading) {
     return (
@@ -77,12 +80,12 @@ export function TrackPage() {
   return (
     <div className="flex flex-col h-full relative">
       {/* Day cards section */}
-      <div className="flex-shrink-0 px-5 pt-4 pb-3">
+      <div className="flex-shrink-0 px-5 pt-4 pb-6">
         <div className="flex gap-3">
           {/* Scrollable past days */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-3 overflow-x-auto flex-1 scrollbar-hide py-1 -my-1 px-1 -mx-1"
+            className="flex gap-3 overflow-x-auto overflow-y-visible flex-1 scrollbar-hide pb-4 -mb-4 px-1 -mx-1"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {pastDayCards.map((day) => (
@@ -117,9 +120,14 @@ export function TrackPage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Cycle Phase</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center gap-4">
-                <svg width="160" height="160" viewBox="0 0 160 160" className="w-40 h-40">
+            <CardContent className="pt-0">
+              <div className="flex items-center gap-4">
+                <svg
+                  width="120"
+                  height="120"
+                  viewBox="0 0 160 160"
+                  className="w-24 h-24 flex-shrink-0"
+                >
                   {/* Menstrual (red) - top right quadrant */}
                   <path d="M80 80 L80 20 A60 60 0 0 1 140 80 Z" fill="#dc2626" opacity="0.8" />
                   {/* Follicular (yellow) - bottom right quadrant */}
@@ -129,7 +137,7 @@ export function TrackPage() {
                   {/* Luteal (purple) - top left quadrant */}
                   <path d="M80 80 L20 80 A60 60 0 0 1 80 20 Z" fill="#a855f7" opacity="0.8" />
                 </svg>
-                <p className="text-xs text-center text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Track more data to see your current cycle phase
                 </p>
               </div>
@@ -194,7 +202,7 @@ export function TrackPage() {
         {/* Form overlay with slide-in animation */}
         <div
           className={cn(
-            'absolute inset-x-0 top-0 bg-white/95 backdrop-blur-sm px-4 pt-2 pb-4 shadow-lg',
+            'absolute inset-x-0 top-0 px-4 pt-2 pb-4',
             'transition-transform duration-300 ease-out',
             isFormOpen ? 'translate-y-0' : '-translate-y-full'
           )}
@@ -221,34 +229,42 @@ type DayCardProps = {
 
 function DayCard({ label, dayOfMonth, isSelected, hasData, isToday, onClick }: DayCardProps) {
   return (
-    <button
-      onClick={onClick}
-      className="flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg p-0.5"
-    >
-      <Card
-        className={cn(
-          'w-[5.4rem] transition-all duration-200 cursor-pointer bg-white/90 backdrop-blur-sm',
-          isSelected && 'ring-2 ring-primary bg-white scale-105 shadow-md',
-          isToday && !isSelected && 'border-primary border-2',
-          !isSelected && 'hover:bg-white'
-        )}
+    <div className="relative flex-shrink-0">
+      <button
+        onClick={onClick}
+        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg p-0.5"
       >
-        <CardContent className="p-2 pt-2 text-center">
-          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
-            {label}
-          </p>
-          <p className="text-2xl font-bold">{dayOfMonth}</p>
-          {/* Status icon below day of month */}
-          <div className="mt-1">
-            {hasData ? (
-              <CheckIcon className="w-4 h-4 text-green-500 mx-auto" />
-            ) : (
-              <QuestionIcon className="w-4 h-4 text-muted-foreground/40 mx-auto" />
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </button>
+        <Card
+          className={cn(
+            'w-[5.4rem] transition-all duration-200 cursor-pointer bg-white/90 backdrop-blur-sm',
+            isSelected && 'ring-2 ring-primary bg-white scale-105 shadow-md',
+            isToday && !isSelected && 'border-primary border-2',
+            !isSelected && 'hover:bg-white'
+          )}
+        >
+          <CardContent className="p-2 pt-2 text-center">
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
+              {label}
+            </p>
+            <p className="text-2xl font-bold">{dayOfMonth}</p>
+            {/* Status icon below day of month */}
+            <div className="mt-1">
+              {hasData ? (
+                <CheckIcon className="w-4 h-4 text-green-500 mx-auto" />
+              ) : (
+                <QuestionIcon className="w-4 h-4 text-muted-foreground/40 mx-auto" />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </button>
+      {/* Connector triangle pointing down */}
+      {isSelected && (
+        <div className="absolute left-1/2 -translate-x-1/2 -bottom-3 z-10">
+          <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-white" />
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -297,7 +313,7 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
   const libido = entry.getLibido()
 
   return (
-    <Card>
+    <Card className="relative">
       <CardContent className="space-y-5 p-4">
         <div className="space-y-2">
           <div className="flex justify-between items-center">
