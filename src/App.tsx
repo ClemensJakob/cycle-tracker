@@ -4,8 +4,8 @@ import { TrackingProvider } from '@/TrackingContext'
 function App() {
   return (
     <TrackingProvider>
-      <div className="min-h-dvh bg-gradient-to-br from-blue-500 to-purple-600">
-        <main className="h-dvh">
+      <div className="h-dvh bg-gradient-to-br from-blue-500 to-purple-600 overflow-hidden overscroll-none">
+        <main className="h-full overflow-hidden">
           <TrackPage />
         </main>
       </div>
