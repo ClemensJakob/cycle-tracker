@@ -52,7 +52,7 @@ describe('TrackPage', () => {
     })
   })
 
-  it('should show trends chart', async () => {
+  it('should show chart with legend', async () => {
     const mockClient = createMockClient()
 
     render(
@@ -62,7 +62,8 @@ describe('TrackPage', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Trends')).toBeInTheDocument()
+      expect(screen.getByText('Mood')).toBeInTheDocument()
+      expect(screen.getByText('Libido')).toBeInTheDocument()
     })
   })
 

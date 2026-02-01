@@ -23,7 +23,12 @@ export function TrackingProvider({
         const entriesMap: Record<string, TrackingEntryObject> = {}
 
         for (const entry of storedEntries) {
-          entriesMap[entry.dateKey] = makeTrackingEntry(entry.dateKey, entry.mood, entry.libido)
+          entriesMap[entry.dateKey] = makeTrackingEntry(
+            entry.dateKey,
+            entry.mood,
+            entry.libido,
+            entry.notes
+          )
         }
 
         setEntries(entriesMap)

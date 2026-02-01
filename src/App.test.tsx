@@ -27,11 +27,12 @@ describe('App', () => {
     })
   })
 
-  it('shows the trends chart', async () => {
+  it('shows the chart with legend', async () => {
     render(<App />)
 
     await waitFor(() => {
-      expect(screen.getByText('Trends')).toBeInTheDocument()
+      expect(screen.getByText('Mood')).toBeInTheDocument()
+      expect(screen.getByText('Libido')).toBeInTheDocument()
     })
   })
 

@@ -75,7 +75,7 @@ describe('tracking domain', () => {
 
     it('should serialize to a plain object', () => {
       const entry = makeTrackingEntry('2026-01-31')
-      const withData = entry.setMood(4).setLibido(3)
+      const withData = entry.setMood(4).setLibido(3).setNotes('feeling good')
 
       const serialized = withData.toJSON()
 
@@ -83,6 +83,7 @@ describe('tracking domain', () => {
         dateKey: '2026-01-31',
         mood: 4,
         libido: 3,
+        notes: 'feeling good',
       })
     })
 
@@ -91,13 +92,24 @@ describe('tracking domain', () => {
         dateKey: '2026-01-31',
         mood: 4,
         libido: 3,
+        notes: 'test note',
       }
 
-      const entry = makeTrackingEntry(data.dateKey, data.mood, data.libido)
+      const entry = makeTrackingEntry(data.dateKey, data.mood, data.libido, data.notes)
 
       expect(entry.getDateKey()).toBe('2026-01-31')
       expect(entry.getMood()).toBe(4)
       expect(entry.getLibido()).toBe(3)
+      expect(entry.getNotes()).toBe('test note')
+    })
+
+    it('should allow setting and clearing notes', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+      const withNotes = entry.setNotes('my note')
+      const cleared = withNotes.setNotes(undefined)
+
+      expect(withNotes.getNotes()).toBe('my note')
+      expect(cleared.getNotes()).toBeUndefined()
     })
 
     it('should be immutable - setting values returns a new instance', () => {

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
@@ -67,23 +67,28 @@ export function TrackPage() {
     const dateKey = formatDateKey(date)
     const { dayOfMonth } = getDayLabel(date)
     const entry = getEntry(dateKey)
+    const notes = entry.getNotes()
 
     return {
       day: dayOfMonth.toString(),
+      label: notes
+        ? `${dayOfMonth} ${notes.slice(0, 8)}${notes.length > 8 ? '…' : ''}`
+        : dayOfMonth.toString(),
       mood: entry.getMood(),
       libido: entry.getLibido(),
+      notes,
     }
   })
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative py-2">
       {/* Day cards section */}
-      <div className="flex-shrink-0 px-5 pt-4 pb-6">
-        <div className="flex gap-3">
+      <div className="flex-shrink-0 px-3 pb-4">
+        <div className="flex gap-2">
           {/* Scrollable past days */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-3 overflow-x-auto overflow-y-visible flex-1 scrollbar-hide pb-4 -mb-4 px-1 -mx-1"
+            className="flex gap-2 p-1 overflow-x-auto overflow-y-visible flex-1 scrollbar-hide pb-3 -mb-3 px-1 -mx-1"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {pastDayCards.map((day) => (
@@ -111,13 +116,13 @@ export function TrackPage() {
       </div>
 
       {/* Content area with form and graph */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-5 py-4 space-y-4">
+      <div className="flex-1 min-h-0">
+        <div className="px-3 py-1 space-y-2 flex flex-col justify-between h-full">
           {/* Tracking form - inline with content */}
           <div
             className={cn(
               'transition-all duration-300 ease-out overflow-hidden',
-              isFormOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+              isFormOpen ? 'max-h-52 opacity-100' : 'max-h-0 opacity-0'
             )}
           >
             <TrackingForm
@@ -127,18 +132,38 @@ export function TrackPage() {
             />
           </div>
           <Card className="bg-white/90 backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Trends</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-48">
+            <CardContent className="p-2">
+              <div className="h-36">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
                     <XAxis
                       dataKey="day"
-                      tick={{ fontSize: 10 }}
+                      tick={({ x, y, payload, index }) => {
+                        const item = chartData[index]
+                        const hasNotes = item?.notes
+                        return (
+                          <g transform={`translate(${x},${y})`}>
+                            <text x={0} y={0} dy={10} textAnchor="middle" fontSize={10} fill="#666">
+                              {payload.value}
+                            </text>
+                            {hasNotes && (
+                              <text
+                                x={0}
+                                y={0}
+                                dy={20}
+                                textAnchor="middle"
+                                fontSize={7}
+                                fill="#999"
+                              >
+                                📝
+                              </text>
+                            )}
+                          </g>
+                        )
+                      }}
                       tickLine={false}
                       axisLine={false}
+                      height={30}
                     />
                     <YAxis
                       domain={[1, 5]}
@@ -149,11 +174,23 @@ export function TrackPage() {
                       width={20}
                     />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'white',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        fontSize: '12px',
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null
+                        const data = payload[0]?.payload
+                        return (
+                          <div className="bg-white border border-gray-200 rounded-lg p-2 text-xs shadow-sm">
+                            <p className="font-medium mb-1">Day {label}</p>
+                            {data?.mood && <p className="text-violet-500">Mood: {data.mood}</p>}
+                            {data?.libido && (
+                              <p className="text-orange-500">Libido: {data.libido}</p>
+                            )}
+                            {data?.notes && (
+                              <p className="text-gray-500 mt-1 max-w-32 break-words">
+                                {data.notes}
+                              </p>
+                            )}
+                          </div>
+                        )
                       }}
                     />
                     <Legend wrapperStyle={{ fontSize: '10px' }} iconSize={8} />
@@ -204,23 +241,23 @@ function DayCard({ label, dayOfMonth, isSelected, hasData, isToday, onClick }: D
       >
         <Card
           className={cn(
-            'w-[5.4rem] transition-all duration-200 cursor-pointer bg-white/90 backdrop-blur-sm',
+            'w-[4.5rem] transition-all duration-200 cursor-pointer bg-white/90 backdrop-blur-sm',
             isSelected && 'ring-2 ring-primary bg-white scale-105 shadow-md',
             isToday && !isSelected && 'border-primary border-2',
             !isSelected && 'hover:bg-white'
           )}
         >
-          <CardContent className="p-2 pt-2 text-center">
-            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
+          <CardContent className="p-1.5 pt-1.5 text-center">
+            <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-wide">
               {label}
             </p>
-            <p className="text-2xl font-bold">{dayOfMonth}</p>
+            <p className="text-xl font-bold">{dayOfMonth}</p>
             {/* Status icon below day of month */}
-            <div className="mt-1">
+            <div className="mt-0.5">
               {hasData ? (
-                <CheckIcon className="w-4 h-4 text-green-500 mx-auto" />
+                <CheckIcon className="w-3.5 h-3.5 text-green-500 mx-auto" />
               ) : (
-                <QuestionIcon className="w-4 h-4 text-muted-foreground/40 mx-auto" />
+                <QuestionIcon className="w-3.5 h-3.5 text-muted-foreground/40 mx-auto" />
               )}
             </div>
           </CardContent>
@@ -279,11 +316,12 @@ type TrackingFormProps = {
 function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
   const mood = entry.getMood()
   const libido = entry.getLibido()
+  const notes = entry.getNotes()
 
   return (
     <Card className="bg-white/90 backdrop-blur-sm">
-      <CardContent className="p-4">
-        <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-3 items-center">
+      <CardContent className="p-3 space-y-4">
+        <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-2 items-center">
           {/* Mood row */}
           <Label htmlFor="mood-slider" className="text-sm whitespace-nowrap">
             Mood
@@ -318,6 +356,12 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
             {libido ?? '-'}
           </span>
         </div>
+        <textarea
+          placeholder="Notes..."
+          value={notes ?? ''}
+          onChange={(e) => onUpdate(entry.setNotes(e.target.value || undefined))}
+          className="w-full text-base p-2 rounded-md border border-input bg-background resize-none h-12 focus:outline-none focus:ring-2 focus:ring-ring"
+        />
       </CardContent>
     </Card>
   )

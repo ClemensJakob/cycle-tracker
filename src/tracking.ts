@@ -9,14 +9,17 @@ export type TrackingEntry = {
   dateKey: string // Format: YYYY-MM-DD
   mood?: number // 1-5
   libido?: number // 1-5
+  notes?: string
 }
 
 export type TrackingEntryObject = {
   getDateKey: () => string
   getMood: () => number | undefined
   getLibido: () => number | undefined
+  getNotes: () => string | undefined
   setMood: (value: number | undefined) => TrackingEntryObject
   setLibido: (value: number | undefined) => TrackingEntryObject
+  setNotes: (value: string | undefined) => TrackingEntryObject
   toJSON: () => TrackingEntry
 }
 
@@ -33,33 +36,41 @@ function clamp(value: number, min: number, max: number): number {
 export function makeTrackingEntry(
   dateKey: string,
   mood?: number,
-  libido?: number
+  libido?: number,
+  notes?: string
 ): TrackingEntryObject {
   const state: TrackingEntry = {
     dateKey,
     mood,
     libido,
+    notes,
   }
 
   return {
     getDateKey: () => state.dateKey,
     getMood: () => state.mood,
     getLibido: () => state.libido,
+    getNotes: () => state.notes,
 
     setMood: (value: number | undefined) => {
       const clampedValue = value !== undefined ? clamp(value, 1, 5) : undefined
-      return makeTrackingEntry(state.dateKey, clampedValue, state.libido)
+      return makeTrackingEntry(state.dateKey, clampedValue, state.libido, state.notes)
     },
 
     setLibido: (value: number | undefined) => {
       const clampedValue = value !== undefined ? clamp(value, 1, 5) : undefined
-      return makeTrackingEntry(state.dateKey, state.mood, clampedValue)
+      return makeTrackingEntry(state.dateKey, state.mood, clampedValue, state.notes)
+    },
+
+    setNotes: (value: string | undefined) => {
+      return makeTrackingEntry(state.dateKey, state.mood, state.libido, value)
     },
 
     toJSON: () => ({
       dateKey: state.dateKey,
       mood: state.mood,
       libido: state.libido,
+      notes: state.notes,
     }),
   }
 }
