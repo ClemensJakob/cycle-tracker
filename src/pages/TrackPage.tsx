@@ -75,8 +75,6 @@ export function TrackPage() {
     }
   })
 
-  const closeForm = () => setSelectedDateKey('')
-
   return (
     <div className="flex flex-col h-full relative">
       {/* Day cards section */}
@@ -112,37 +110,22 @@ export function TrackPage() {
         </div>
       </div>
 
-      {/* Content area with evaluation and form overlay */}
-      <div className="flex-1 relative overflow-hidden">
-        {/* Evaluation section (background) - clickable to close form */}
-        <div className="px-5 py-6 pb-4 space-y-4 h-full overflow-y-auto" onClick={closeForm}>
-          <Card className="bg-white/90 backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Cycle Phase</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex items-center gap-4">
-                <svg
-                  width="120"
-                  height="120"
-                  viewBox="0 0 160 160"
-                  className="w-24 h-24 flex-shrink-0"
-                >
-                  {/* Menstrual (red) - top right quadrant */}
-                  <path d="M80 80 L80 20 A60 60 0 0 1 140 80 Z" fill="#dc2626" opacity="0.8" />
-                  {/* Follicular (yellow) - bottom right quadrant */}
-                  <path d="M80 80 L140 80 A60 60 0 0 1 80 140 Z" fill="#eab308" opacity="0.8" />
-                  {/* Ovulation (pink) - bottom left quadrant */}
-                  <path d="M80 80 L80 140 A60 60 0 0 1 20 80 Z" fill="#ec4899" opacity="0.8" />
-                  {/* Luteal (purple) - top left quadrant */}
-                  <path d="M80 80 L20 80 A60 60 0 0 1 80 20 Z" fill="#a855f7" opacity="0.8" />
-                </svg>
-                <p className="text-xs text-muted-foreground">
-                  Track more data to see your current cycle phase
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Content area with form and graph */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-5 py-4 space-y-4">
+          {/* Tracking form - inline with content */}
+          <div
+            className={cn(
+              'transition-all duration-300 ease-out overflow-hidden',
+              isFormOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+            )}
+          >
+            <TrackingForm
+              entry={selectedEntry}
+              onUpdate={updateEntry}
+              onClose={() => setSelectedDateKey('')}
+            />
+          </div>
           <Card className="bg-white/90 backdrop-blur-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Trends</CardTitle>
@@ -197,21 +180,6 @@ export function TrackPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Form overlay with slide-in animation */}
-        <div
-          className={cn(
-            'absolute inset-x-0 top-0 px-4 pt-2 pb-4',
-            'transition-transform duration-300 ease-out',
-            isFormOpen ? 'translate-y-0' : '-translate-y-full'
-          )}
-        >
-          <TrackingForm
-            entry={selectedEntry}
-            onUpdate={updateEntry}
-            onClose={() => setSelectedDateKey('')}
-          />
         </div>
       </div>
     </div>
@@ -313,17 +281,13 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
   const libido = entry.getLibido()
 
   return (
-    <Card className="relative">
-      <CardContent className="space-y-5 p-4">
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <Label htmlFor="mood-slider" className="text-sm">
-              Mood
-            </Label>
-            <span className="text-sm font-semibold tabular-nums w-6 text-center">
-              {mood ?? '-'}
-            </span>
-          </div>
+    <Card className="bg-white/90 backdrop-blur-sm">
+      <CardContent className="p-4">
+        <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-3 items-center">
+          {/* Mood row */}
+          <Label htmlFor="mood-slider" className="text-sm whitespace-nowrap">
+            Mood
+          </Label>
           <Slider
             id="mood-slider"
             min={1}
@@ -334,22 +298,12 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
               onUpdate(entry.setMood(value))
             }}
           />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>😔</span>
-            <span>😐</span>
-            <span>😊</span>
-          </div>
-        </div>
+          <span className="text-sm font-semibold tabular-nums w-6 text-center">{mood ?? '-'}</span>
 
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <Label htmlFor="libido-slider" className="text-sm">
-              Libido
-            </Label>
-            <span className="text-sm font-semibold tabular-nums w-6 text-center">
-              {libido ?? '-'}
-            </span>
-          </div>
+          {/* Libido row */}
+          <Label htmlFor="libido-slider" className="text-sm whitespace-nowrap">
+            Libido
+          </Label>
           <Slider
             id="libido-slider"
             min={1}
@@ -360,11 +314,9 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
               onUpdate(entry.setLibido(value))
             }}
           />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>🔥</span>
-            <span>🔥🔥</span>
-            <span>🔥🔥🔥</span>
-          </div>
+          <span className="text-sm font-semibold tabular-nums w-6 text-center">
+            {libido ?? '-'}
+          </span>
         </div>
       </CardContent>
     </Card>

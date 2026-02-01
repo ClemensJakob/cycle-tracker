@@ -52,7 +52,7 @@ describe('TrackPage', () => {
     })
   })
 
-  it('should show evaluation section with averages', async () => {
+  it('should show trends chart', async () => {
     const mockClient = createMockClient()
 
     render(
@@ -62,7 +62,6 @@ describe('TrackPage', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Cycle Phase')).toBeInTheDocument()
       expect(screen.getByText('Trends')).toBeInTheDocument()
     })
   })

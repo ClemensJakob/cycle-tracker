@@ -27,11 +27,10 @@ describe('App', () => {
     })
   })
 
-  it('shows the evaluation section with averages', async () => {
+  it('shows the trends chart', async () => {
     render(<App />)
 
     await waitFor(() => {
-      expect(screen.getByText('Cycle Phase')).toBeInTheDocument()
       expect(screen.getByText('Trends')).toBeInTheDocument()
     })
   })
