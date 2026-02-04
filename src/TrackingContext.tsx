@@ -27,7 +27,13 @@ export function TrackingProvider({
             entry.dateKey,
             entry.mood,
             entry.libido,
-            entry.notes
+            entry.notes,
+            entry.selfPerception,
+            entry.energy,
+            entry.dischargeConsistency,
+            entry.dischargeAmount,
+            entry.motivation,
+            entry.symptoms
           )
         }
 

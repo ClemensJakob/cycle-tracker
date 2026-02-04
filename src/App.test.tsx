@@ -27,12 +27,12 @@ describe('App', () => {
     })
   })
 
-  it('shows the chart with legend', async () => {
+  it('shows the chart section', async () => {
     render(<App />)
 
     await waitFor(() => {
-      expect(screen.getByText('Mood')).toBeInTheDocument()
-      expect(screen.getByText('Libido')).toBeInTheDocument()
+      // Check for chart section header
+      expect(screen.getByText('Last 10 days')).toBeInTheDocument()
     })
   })
 
@@ -40,7 +40,8 @@ describe('App', () => {
     render(<App />)
 
     await waitFor(() => {
-      expect(screen.getByText('Mood')).toBeInTheDocument()
+      // Form labels are in German
+      expect(screen.getByText('Stimmung')).toBeInTheDocument()
       expect(screen.getByText('Libido')).toBeInTheDocument()
     })
   })

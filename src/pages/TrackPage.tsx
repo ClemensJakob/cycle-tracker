@@ -2,7 +2,13 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
-import { formatDateKey, getDateDaysAgo, getDayLabel, type TrackingEntryObject } from '@/tracking'
+import {
+  formatDateKey,
+  getDateDaysAgo,
+  getDayLabel,
+  type Symptom,
+  type TrackingEntryObject,
+} from '@/tracking'
 import { useTracking } from '@/useTracking'
 import { useEffect, useRef, useState } from 'react'
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -13,7 +19,14 @@ export function TrackPage() {
   const { getEntry, updateEntry, isLoading } = useTracking()
   const todayKey = formatDateKey(new Date())
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
+  const [hiddenLines, setHiddenLines] = useState<string[]>([])
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  const handleLegendClick = (dataKey: string) => {
+    setHiddenLines((prev) =>
+      prev.includes(dataKey) ? prev.filter((key) => key !== dataKey) : [...prev, dataKey]
+    )
+  }
 
   // Scroll to the right on mount and open today's form with animation
   useEffect(() => {
@@ -71,22 +84,27 @@ export function TrackPage() {
 
     return {
       day: dayOfMonth.toString(),
-      label: notes
-        ? `${dayOfMonth} ${notes.slice(0, 8)}${notes.length > 8 ? '…' : ''}`
-        : dayOfMonth.toString(),
       mood: entry.getMood(),
+      selfPerception: entry.getSelfPerception(),
+      energy: entry.getEnergy(),
+      motivation: entry.getMotivation(),
       libido: entry.getLibido(),
+      dischargeConsistency: entry.getDischargeConsistency(),
+      dischargeAmount: entry.getDischargeAmount(),
+      symptoms: entry.getSymptoms(),
       notes,
     }
   })
 
+  const closeForm = () => setSelectedDateKey('')
+
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative" onClick={closeForm}>
       {/* Upper section: Data Entry */}
-      <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm pt-3 pb-2">
+      <div className="shrink-0 bg-white/10 backdrop-blur-sm pt-3 pb-2">
         {/* Day cards section */}
         <div className="px-3 pb-3">
-          <div className="flex gap-2">
+          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
             {/* Scrollable past days */}
             <div
               ref={scrollContainerRef}
@@ -100,7 +118,9 @@ export function TrackPage() {
                   dayOfMonth={day.dayOfMonth}
                   isSelected={selectedDateKey === day.dateKey}
                   hasData={day.hasData}
-                  onClick={() => setSelectedDateKey(day.dateKey)}
+                  onClick={() =>
+                    setSelectedDateKey((prev) => (prev === day.dateKey ? '' : day.dateKey))
+                  }
                 />
               ))}
             </div>
@@ -112,7 +132,7 @@ export function TrackPage() {
               isSelected={selectedDateKey === todayKey}
               hasData={todayHasData}
               isToday
-              onClick={() => setSelectedDateKey(todayKey)}
+              onClick={() => setSelectedDateKey((prev) => (prev === todayKey ? '' : todayKey))}
             />
           </div>
         </div>
@@ -121,22 +141,19 @@ export function TrackPage() {
         <div
           className={cn(
             'px-3 pt-4 transition-all duration-300 ease-out overflow-hidden',
-            isFormOpen ? 'max-h-52 opacity-100 pb-2' : 'max-h-0 opacity-0 pb-0'
+            isFormOpen ? 'max-h-128 opacity-100 pb-2' : 'max-h-0 opacity-0 pb-0'
           )}
+          onClick={(e) => e.stopPropagation()}
         >
-          <TrackingForm
-            entry={selectedEntry}
-            onUpdate={updateEntry}
-            onClose={() => setSelectedDateKey('')}
-          />
+          <TrackingForm entry={selectedEntry} onUpdate={updateEntry} />
         </div>
       </div>
 
       {/* Visual divider */}
-      <div className="h-px bg-gradient-to-r from-transparent via-white/30 to-transparent mx-6" />
+      <div className="h-px bg-linear-to-r from-transparent via-white/30 to-transparent mx-6" />
 
       {/* Lower section: Graph/Insights */}
-      <div className="flex-1 min-h-0 px-3 py-3">
+      <div className="h-[60vh] px-3 py-3">
         <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-0 h-full">
           <CardContent className="p-3 h-full flex flex-col">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">
@@ -181,17 +198,64 @@ export function TrackPage() {
                       const data = payload[0]?.payload
                       return (
                         <div className="bg-white border border-gray-200 rounded-lg p-2 text-xs shadow-sm">
-                          <p className="font-medium mb-1">Day {label}</p>
-                          {data?.mood && <p className="text-violet-500">Mood: {data.mood}</p>}
+                          <p className="font-medium mb-1">Tag {label}</p>
+                          {data?.mood && <p className="text-violet-500">Stimmung: {data.mood}</p>}
+                          {data?.selfPerception && (
+                            <p className="text-pink-500">Selbstwahrn.: {data.selfPerception}</p>
+                          )}
+                          {data?.energy && <p className="text-green-500">Energie: {data.energy}</p>}
+                          {data?.motivation && (
+                            <p className="text-amber-500">Motivation: {data.motivation}</p>
+                          )}
                           {data?.libido && <p className="text-orange-500">Libido: {data.libido}</p>}
+                          {data?.dischargeConsistency && (
+                            <p className="text-cyan-500">Konsistenz: {data.dischargeConsistency}</p>
+                          )}
+                          {data?.dischargeAmount && (
+                            <p className="text-blue-500">Menge: {data.dischargeAmount}</p>
+                          )}
+                          {data?.symptoms?.length > 0 && (
+                            <p className="text-rose-500">
+                              Symptome:{' '}
+                              {data.symptoms
+                                .map((s: string) =>
+                                  s === 'breastTension'
+                                    ? 'Brust'
+                                    : s === 'bloating'
+                                      ? 'Blähung'
+                                      : s === 'headache'
+                                        ? 'Kopf'
+                                        : s
+                                )
+                                .join(', ')}
+                            </p>
+                          )}
                           {data?.notes && (
-                            <p className="text-gray-500 mt-1 max-w-32 break-words">{data.notes}</p>
+                            <p className="text-gray-500 mt-1 max-w-32 wrap-break-word">
+                              {data.notes}
+                            </p>
                           )}
                         </div>
                       )
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: '10px' }} iconSize={8} />
+                  <Legend
+                    wrapperStyle={{ fontSize: '10px' }}
+                    iconSize={8}
+                    onClick={(e) => handleLegendClick(e.dataKey as string)}
+                    formatter={(value, entry) => (
+                      <span
+                        style={{
+                          color: hiddenLines.includes(entry.dataKey as string)
+                            ? '#ccc'
+                            : entry.color,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {value}
+                      </span>
+                    )}
+                  />
                   <Line
                     type="monotone"
                     dataKey="mood"
@@ -199,7 +263,28 @@ export function TrackPage() {
                     strokeWidth={2}
                     dot={{ fill: '#8b5cf6', strokeWidth: 0, r: 3 }}
                     connectNulls
-                    name="Mood"
+                    name="Stimmung"
+                    hide={hiddenLines.includes('mood')}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="selfPerception"
+                    stroke="#ec4899"
+                    strokeWidth={2}
+                    dot={{ fill: '#ec4899', strokeWidth: 0, r: 3 }}
+                    connectNulls
+                    name="Selbstwahrn."
+                    hide={hiddenLines.includes('selfPerception')}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="energy"
+                    stroke="#22c55e"
+                    strokeWidth={2}
+                    dot={{ fill: '#22c55e', strokeWidth: 0, r: 3 }}
+                    connectNulls
+                    name="Energie"
+                    hide={hiddenLines.includes('energy')}
                   />
                   <Line
                     type="monotone"
@@ -209,9 +294,62 @@ export function TrackPage() {
                     dot={{ fill: '#f97316', strokeWidth: 0, r: 3 }}
                     connectNulls
                     name="Libido"
+                    hide={hiddenLines.includes('libido')}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="dischargeConsistency"
+                    stroke="#06b6d4"
+                    strokeWidth={2}
+                    dot={{ fill: '#06b6d4', strokeWidth: 0, r: 3 }}
+                    connectNulls
+                    name="Konsistenz"
+                    hide={hiddenLines.includes('dischargeConsistency')}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="dischargeAmount"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ fill: '#3b82f6', strokeWidth: 0, r: 3 }}
+                    connectNulls
+                    name="Menge"
+                    hide={hiddenLines.includes('dischargeAmount')}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="motivation"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    dot={{ fill: '#f59e0b', strokeWidth: 0, r: 3 }}
+                    connectNulls
+                    name="Motivation"
+                    hide={hiddenLines.includes('motivation')}
                   />
                 </LineChart>
               </ResponsiveContainer>
+            </div>
+            {/* Symptom tags row */}
+            <div className="flex gap-1 mt-2 flex-wrap">
+              <span className="text-[9px] text-muted-foreground mr-1">Symptome:</span>
+              {chartData.some((d) => d.symptoms?.includes('breastTension')) && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600">
+                  Brustspannen
+                </span>
+              )}
+              {chartData.some((d) => d.symptoms?.includes('bloating')) && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600">
+                  Blähungen
+                </span>
+              )}
+              {chartData.some((d) => d.symptoms?.includes('headache')) && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600">
+                  Kopfschmerzen
+                </span>
+              )}
+              {!chartData.some((d) => d.symptoms?.length) && (
+                <span className="text-[9px] text-muted-foreground/50">keine</span>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -231,14 +369,14 @@ type DayCardProps = {
 
 function DayCard({ label, dayOfMonth, isSelected, hasData, isToday, onClick }: DayCardProps) {
   return (
-    <div className="relative flex-shrink-0">
+    <div className="relative shrink-0">
       <button
         onClick={onClick}
         className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg p-0.5"
       >
         <Card
           className={cn(
-            'w-[4.5rem] transition-all duration-200 cursor-pointer bg-white/90 backdrop-blur-sm',
+            'w-18 transition-all duration-200 cursor-pointer bg-white/90 backdrop-blur-sm',
             isSelected && 'ring-2 ring-primary bg-white scale-105 shadow-md',
             isToday && !isSelected && 'border-primary border-2',
             !isSelected && 'hover:bg-white'
@@ -263,7 +401,7 @@ function DayCard({ label, dayOfMonth, isSelected, hasData, isToday, onClick }: D
       {/* Connector triangle pointing down */}
       {isSelected && (
         <div className="absolute left-1/2 -translate-x-1/2 -bottom-4 z-10">
-          <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-white" />
+          <div className="w-0 h-0 border-l-10 border-l-transparent border-r-10 border-r-transparent border-t-10 border-t-white" />
         </div>
       )}
     </div>
@@ -307,21 +445,40 @@ function QuestionIcon({ className }: { className?: string }) {
 type TrackingFormProps = {
   entry: TrackingEntryObject
   onUpdate: (entry: TrackingEntryObject) => void
-  onClose: () => void
 }
 
 function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
   const mood = entry.getMood()
   const libido = entry.getLibido()
+  const selfPerception = entry.getSelfPerception()
+  const energy = entry.getEnergy()
+  const motivation = entry.getMotivation()
+  const dischargeConsistency = entry.getDischargeConsistency()
+  const dischargeAmount = entry.getDischargeAmount()
+  const symptoms = entry.getSymptoms()
   const notes = entry.getNotes()
+
+  const symptomOptions: { value: Symptom; label: string }[] = [
+    { value: 'breastTension', label: 'Brustspannen' },
+    { value: 'bloating', label: 'Blähungen' },
+    { value: 'headache', label: 'Kopfschmerzen' },
+  ]
+
+  const toggleSymptom = (symptom: Symptom) => {
+    if (symptoms.includes(symptom)) {
+      onUpdate(entry.removeSymptom(symptom))
+    } else {
+      onUpdate(entry.addSymptom(symptom))
+    }
+  }
 
   return (
     <Card className="bg-white/90 backdrop-blur-sm">
-      <CardContent className="p-1 px-3 space-y-4">
-        <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-2 items-center">
+      <CardContent className="p-2 px-3 space-y-3">
+        <div className="grid grid-cols-[7rem_1fr_1.5rem] gap-x-3 gap-y-2 items-center">
           {/* Mood row */}
-          <Label htmlFor="mood-slider" className="text-sm whitespace-nowrap">
-            Mood
+          <Label htmlFor="mood-slider" className="text-sm truncate">
+            Stimmung
           </Label>
           <Slider
             id="mood-slider"
@@ -329,14 +486,58 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
             max={5}
             step={1}
             value={[mood ?? 3]}
-            onValueChange={([value]) => {
-              onUpdate(entry.setMood(value))
-            }}
+            onValueChange={([value]) => onUpdate(entry.setMood(value))}
           />
-          <span className="text-sm font-semibold tabular-nums w-6 text-center">{mood ?? '-'}</span>
+          <span className="text-sm font-semibold tabular-nums text-center">{mood ?? '-'}</span>
+
+          {/* Self Perception row */}
+          <Label htmlFor="self-perception-slider" className="text-sm truncate">
+            Selbstwahrn.
+          </Label>
+          <Slider
+            id="self-perception-slider"
+            min={1}
+            max={5}
+            step={1}
+            value={[selfPerception ?? 3]}
+            onValueChange={([value]) => onUpdate(entry.setSelfPerception(value))}
+          />
+          <span className="text-sm font-semibold tabular-nums text-center">
+            {selfPerception ?? '-'}
+          </span>
+
+          {/* Energy row */}
+          <Label htmlFor="energy-slider" className="text-sm truncate">
+            Energie
+          </Label>
+          <Slider
+            id="energy-slider"
+            min={1}
+            max={5}
+            step={1}
+            value={[energy ?? 3]}
+            onValueChange={([value]) => onUpdate(entry.setEnergy(value))}
+          />
+          <span className="text-sm font-semibold tabular-nums text-center">{energy ?? '-'}</span>
+
+          {/* Motivation row */}
+          <Label htmlFor="motivation-slider" className="text-sm truncate">
+            Motivation
+          </Label>
+          <Slider
+            id="motivation-slider"
+            min={1}
+            max={5}
+            step={1}
+            value={[motivation ?? 3]}
+            onValueChange={([value]) => onUpdate(entry.setMotivation(value))}
+          />
+          <span className="text-sm font-semibold tabular-nums text-center">
+            {motivation ?? '-'}
+          </span>
 
           {/* Libido row */}
-          <Label htmlFor="libido-slider" className="text-sm whitespace-nowrap">
+          <Label htmlFor="libido-slider" className="text-sm truncate">
             Libido
           </Label>
           <Slider
@@ -345,19 +546,77 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
             max={5}
             step={1}
             value={[libido ?? 3]}
-            onValueChange={([value]) => {
-              onUpdate(entry.setLibido(value))
-            }}
+            onValueChange={([value]) => onUpdate(entry.setLibido(value))}
           />
-          <span className="text-sm font-semibold tabular-nums w-6 text-center">
-            {libido ?? '-'}
+          <span className="text-sm font-semibold tabular-nums text-center">{libido ?? '-'}</span>
+
+          {/* Discharge section header - spans all columns */}
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide col-span-3 mt-1">
+            Ausfluss
+          </p>
+
+          {/* Discharge consistency row */}
+          <Label htmlFor="discharge-consistency-slider" className="text-sm truncate">
+            Glasig→Cremig
+          </Label>
+          <Slider
+            id="discharge-consistency-slider"
+            min={1}
+            max={5}
+            step={1}
+            value={[dischargeConsistency ?? 3]}
+            onValueChange={([value]) => onUpdate(entry.setDischargeConsistency(value))}
+          />
+          <span className="text-sm font-semibold tabular-nums text-center">
+            {dischargeConsistency ?? '-'}
+          </span>
+
+          {/* Discharge amount row */}
+          <Label htmlFor="discharge-amount-slider" className="text-sm truncate">
+            Wenig→Viel
+          </Label>
+          <Slider
+            id="discharge-amount-slider"
+            min={1}
+            max={5}
+            step={1}
+            value={[dischargeAmount ?? 3]}
+            onValueChange={([value]) => onUpdate(entry.setDischargeAmount(value))}
+          />
+          <span className="text-sm font-semibold tabular-nums text-center">
+            {dischargeAmount ?? '-'}
           </span>
         </div>
+
+        {/* Symptoms multi-select */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Symptome
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {symptomOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => toggleSymptom(option.value)}
+                className={cn(
+                  'px-3 py-1 text-sm rounded-full border transition-colors',
+                  symptoms.includes(option.value)
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background border-input hover:bg-muted'
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <textarea
-          placeholder="Notes..."
+          placeholder="Notizen..."
           value={notes ?? ''}
           onChange={(e) => onUpdate(entry.setNotes(e.target.value || undefined))}
-          className="w-full text-base p-2 rounded-md border border-input bg-background resize-none h-16 focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full text-base p-2 rounded-md border border-input bg-background resize-none h-12 focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </CardContent>
     </Card>

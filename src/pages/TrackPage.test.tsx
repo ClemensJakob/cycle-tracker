@@ -47,12 +47,12 @@ describe('TrackPage', () => {
 
     await waitFor(() => {
       // Form should be visible immediately since today is selected by default
-      expect(screen.getByText('Mood')).toBeInTheDocument()
+      expect(screen.getByText('Stimmung')).toBeInTheDocument()
       expect(screen.getByText('Libido')).toBeInTheDocument()
     })
   })
 
-  it('should show chart with legend', async () => {
+  it('should show chart section', async () => {
     const mockClient = createMockClient()
 
     render(
@@ -62,8 +62,8 @@ describe('TrackPage', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Mood')).toBeInTheDocument()
-      expect(screen.getByText('Libido')).toBeInTheDocument()
+      // Check for chart section header
+      expect(screen.getByText('Last 10 days')).toBeInTheDocument()
     })
   })
 
@@ -77,11 +77,11 @@ describe('TrackPage', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Mood')).toBeInTheDocument()
+      expect(screen.getByText('Stimmung')).toBeInTheDocument()
     })
 
     const sliders = screen.getAllByRole('slider')
-    expect(sliders).toHaveLength(2)
+    expect(sliders.length).toBeGreaterThanOrEqual(4) // mood, selfPerception, energy, libido
   })
 
   it('should switch to a different day when clicked', async () => {
@@ -103,7 +103,7 @@ describe('TrackPage', () => {
 
     // Form should still be visible
     await waitFor(() => {
-      expect(screen.getByText('Mood')).toBeInTheDocument()
+      expect(screen.getByText('Stimmung')).toBeInTheDocument()
     })
   })
 
@@ -125,14 +125,14 @@ describe('TrackPage', () => {
 
     await waitFor(() => {
       // Check that form is loaded with the saved values
-      const moodLabel = screen.getByText('Mood')
+      const moodLabel = screen.getByText('Stimmung')
       const libidoLabel = screen.getByText('Libido')
       expect(moodLabel).toBeInTheDocument()
       expect(libidoLabel).toBeInTheDocument()
 
       // Check sliders are present
       const sliders = screen.getAllByRole('slider')
-      expect(sliders).toHaveLength(2)
+      expect(sliders.length).toBeGreaterThanOrEqual(4)
     })
   })
 })

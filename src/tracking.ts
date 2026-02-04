@@ -5,11 +5,19 @@
  * It follows the Crockford object pattern for immutable domain entities.
  */
 
+export type Symptom = 'breastTension' | 'bloating' | 'headache'
+
 export type TrackingEntry = {
   dateKey: string // Format: YYYY-MM-DD
   mood?: number // 1-5
   libido?: number // 1-5
   notes?: string
+  selfPerception?: number // 1-5
+  energy?: number // 1-5
+  dischargeConsistency?: number // 1-5 (1=glassy, 5=creamy)
+  dischargeAmount?: number // 1-5 (1=little, 5=much)
+  motivation?: number // 1-5
+  symptoms?: Symptom[]
 }
 
 export type TrackingEntryObject = {
@@ -17,9 +25,23 @@ export type TrackingEntryObject = {
   getMood: () => number | undefined
   getLibido: () => number | undefined
   getNotes: () => string | undefined
+  getSelfPerception: () => number | undefined
+  getEnergy: () => number | undefined
+  getDischargeConsistency: () => number | undefined
+  getDischargeAmount: () => number | undefined
+  getMotivation: () => number | undefined
+  getSymptoms: () => Symptom[]
   setMood: (value: number | undefined) => TrackingEntryObject
   setLibido: (value: number | undefined) => TrackingEntryObject
   setNotes: (value: string | undefined) => TrackingEntryObject
+  setSelfPerception: (value: number | undefined) => TrackingEntryObject
+  setEnergy: (value: number | undefined) => TrackingEntryObject
+  setDischargeConsistency: (value: number | undefined) => TrackingEntryObject
+  setDischargeAmount: (value: number | undefined) => TrackingEntryObject
+  setMotivation: (value: number | undefined) => TrackingEntryObject
+  setSymptoms: (value: Symptom[] | undefined) => TrackingEntryObject
+  addSymptom: (symptom: Symptom) => TrackingEntryObject
+  removeSymptom: (symptom: Symptom) => TrackingEntryObject
   toJSON: () => TrackingEntry
 }
 
@@ -37,33 +59,105 @@ export function makeTrackingEntry(
   dateKey: string,
   mood?: number,
   libido?: number,
-  notes?: string
+  notes?: string,
+  selfPerception?: number,
+  energy?: number,
+  dischargeConsistency?: number,
+  dischargeAmount?: number,
+  motivation?: number,
+  symptoms?: Symptom[]
 ): TrackingEntryObject {
   const state: TrackingEntry = {
     dateKey,
     mood,
     libido,
     notes,
+    selfPerception,
+    energy,
+    dischargeConsistency,
+    dischargeAmount,
+    motivation,
+    symptoms,
   }
+
+  const rebuild = (updates: Partial<TrackingEntry>) =>
+    makeTrackingEntry(
+      'dateKey' in updates ? updates.dateKey! : state.dateKey,
+      'mood' in updates ? updates.mood : state.mood,
+      'libido' in updates ? updates.libido : state.libido,
+      'notes' in updates ? updates.notes : state.notes,
+      'selfPerception' in updates ? updates.selfPerception : state.selfPerception,
+      'energy' in updates ? updates.energy : state.energy,
+      'dischargeConsistency' in updates ? updates.dischargeConsistency : state.dischargeConsistency,
+      'dischargeAmount' in updates ? updates.dischargeAmount : state.dischargeAmount,
+      'motivation' in updates ? updates.motivation : state.motivation,
+      'symptoms' in updates ? updates.symptoms : state.symptoms
+    )
 
   return {
     getDateKey: () => state.dateKey,
     getMood: () => state.mood,
     getLibido: () => state.libido,
     getNotes: () => state.notes,
+    getSelfPerception: () => state.selfPerception,
+    getEnergy: () => state.energy,
+    getDischargeConsistency: () => state.dischargeConsistency,
+    getDischargeAmount: () => state.dischargeAmount,
+    getMotivation: () => state.motivation,
+    getSymptoms: () => state.symptoms ?? [],
 
     setMood: (value: number | undefined) => {
       const clampedValue = value !== undefined ? clamp(value, 1, 5) : undefined
-      return makeTrackingEntry(state.dateKey, clampedValue, state.libido, state.notes)
+      return rebuild({ mood: clampedValue })
     },
 
     setLibido: (value: number | undefined) => {
       const clampedValue = value !== undefined ? clamp(value, 1, 5) : undefined
-      return makeTrackingEntry(state.dateKey, state.mood, clampedValue, state.notes)
+      return rebuild({ libido: clampedValue })
     },
 
     setNotes: (value: string | undefined) => {
-      return makeTrackingEntry(state.dateKey, state.mood, state.libido, value)
+      return rebuild({ notes: value })
+    },
+
+    setSelfPerception: (value: number | undefined) => {
+      const clampedValue = value !== undefined ? clamp(value, 1, 5) : undefined
+      return rebuild({ selfPerception: clampedValue })
+    },
+
+    setEnergy: (value: number | undefined) => {
+      const clampedValue = value !== undefined ? clamp(value, 1, 5) : undefined
+      return rebuild({ energy: clampedValue })
+    },
+
+    setDischargeConsistency: (value: number | undefined) => {
+      const clampedValue = value !== undefined ? clamp(value, 1, 5) : undefined
+      return rebuild({ dischargeConsistency: clampedValue })
+    },
+
+    setDischargeAmount: (value: number | undefined) => {
+      const clampedValue = value !== undefined ? clamp(value, 1, 5) : undefined
+      return rebuild({ dischargeAmount: clampedValue })
+    },
+
+    setMotivation: (value: number | undefined) => {
+      const clampedValue = value !== undefined ? clamp(value, 1, 5) : undefined
+      return rebuild({ motivation: clampedValue })
+    },
+
+    setSymptoms: (value: Symptom[] | undefined) => {
+      return rebuild({ symptoms: value })
+    },
+
+    addSymptom: (symptom: Symptom) => {
+      const current = state.symptoms ?? []
+      if (current.includes(symptom)) return rebuild({})
+      return rebuild({ symptoms: [...current, symptom] })
+    },
+
+    removeSymptom: (symptom: Symptom) => {
+      const current = state.symptoms ?? []
+      return rebuild({ symptoms: current.filter((s) => s !== symptom) })
     },
 
     toJSON: () => ({
@@ -71,6 +165,11 @@ export function makeTrackingEntry(
       mood: state.mood,
       libido: state.libido,
       notes: state.notes,
+      selfPerception: state.selfPerception,
+      energy: state.energy,
+      dischargeConsistency: state.dischargeConsistency,
+      dischargeAmount: state.dischargeAmount,
+      symptoms: state.symptoms,
     }),
   }
 }

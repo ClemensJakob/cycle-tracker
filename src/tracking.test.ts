@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { formatDateKey, getDayLabel, makeTrackingEntry, type TrackingEntry } from './tracking'
+import {
+  formatDateKey,
+  getDayLabel,
+  makeTrackingEntry,
+  type TrackingEntry,
+  type Symptom,
+} from './tracking'
 
 describe('tracking domain', () => {
   describe('formatDateKey', () => {
@@ -118,6 +124,133 @@ describe('tracking domain', () => {
 
       expect(entry.getMood()).toBeUndefined()
       expect(updated.getMood()).toBe(5)
+    })
+
+    it('should allow setting selfPerception between 1 and 5', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+      const updated = entry.setSelfPerception(4)
+
+      expect(updated.getSelfPerception()).toBe(4)
+    })
+
+    it('should clamp selfPerception values to 1-5 range', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+
+      expect(entry.setSelfPerception(0).getSelfPerception()).toBe(1)
+      expect(entry.setSelfPerception(6).getSelfPerception()).toBe(5)
+      expect(entry.setSelfPerception(3).getSelfPerception()).toBe(3)
+    })
+
+    it('should allow setting energy between 1 and 5', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+      const updated = entry.setEnergy(3)
+
+      expect(updated.getEnergy()).toBe(3)
+    })
+
+    it('should clamp energy values to 1-5 range', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+
+      expect(entry.setEnergy(0).getEnergy()).toBe(1)
+      expect(entry.setEnergy(6).getEnergy()).toBe(5)
+    })
+
+    it('should allow setting discharge consistency (1=glassy, 5=creamy)', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+      const updated = entry.setDischargeConsistency(2)
+
+      expect(updated.getDischargeConsistency()).toBe(2)
+    })
+
+    it('should clamp discharge consistency to 1-5 range', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+
+      expect(entry.setDischargeConsistency(0).getDischargeConsistency()).toBe(1)
+      expect(entry.setDischargeConsistency(6).getDischargeConsistency()).toBe(5)
+    })
+
+    it('should allow setting discharge amount (1=little, 5=much)', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+      const updated = entry.setDischargeAmount(4)
+
+      expect(updated.getDischargeAmount()).toBe(4)
+    })
+
+    it('should clamp discharge amount to 1-5 range', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+
+      expect(entry.setDischargeAmount(0).getDischargeAmount()).toBe(1)
+      expect(entry.setDischargeAmount(6).getDischargeAmount()).toBe(5)
+    })
+
+    it('should allow setting motivation between 1 and 5', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+      const updated = entry.setMotivation(4)
+
+      expect(updated.getMotivation()).toBe(4)
+    })
+
+    it('should clamp motivation values to 1-5 range', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+
+      expect(entry.setMotivation(0).getMotivation()).toBe(1)
+      expect(entry.setMotivation(6).getMotivation()).toBe(5)
+    })
+
+    it('should allow setting symptoms as an array', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+      const symptoms: Symptom[] = ['breastTension', 'bloating']
+      const updated = entry.setSymptoms(symptoms)
+
+      expect(updated.getSymptoms()).toEqual(['breastTension', 'bloating'])
+    })
+
+    it('should allow adding a single symptom', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+      const withOne = entry.addSymptom('headache')
+      const withTwo = withOne.addSymptom('bloating')
+
+      expect(withTwo.getSymptoms()).toEqual(['headache', 'bloating'])
+    })
+
+    it('should not add duplicate symptoms', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+      const withSymptom = entry.addSymptom('headache').addSymptom('headache')
+
+      expect(withSymptom.getSymptoms()).toEqual(['headache'])
+    })
+
+    it('should allow removing a symptom', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+      const withSymptoms = entry.setSymptoms(['breastTension', 'bloating', 'headache'])
+      const removed = withSymptoms.removeSymptom('bloating')
+
+      expect(removed.getSymptoms()).toEqual(['breastTension', 'headache'])
+    })
+
+    it('should serialize all new fields to JSON', () => {
+      const entry = makeTrackingEntry('2026-01-31')
+      const withData = entry
+        .setMood(4)
+        .setSelfPerception(3)
+        .setEnergy(5)
+        .setDischargeConsistency(2)
+        .setDischargeAmount(4)
+        .setSymptoms(['breastTension', 'headache'])
+
+      const serialized = withData.toJSON()
+
+      expect(serialized).toEqual({
+        dateKey: '2026-01-31',
+        mood: 4,
+        libido: undefined,
+        notes: undefined,
+        selfPerception: 3,
+        energy: 5,
+        dischargeConsistency: 2,
+        dischargeAmount: 4,
+        symptoms: ['breastTension', 'headache'],
+      })
     })
   })
 })
