@@ -2,13 +2,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
-import {
-  formatDateKey,
-  getDateDaysAgo,
-  getDayLabel,
-  type Symptom,
-  type TrackingEntryObject,
-} from '@/tracking'
+import { formatDateKey, getDateDaysAgo, getDayLabel, type TrackingEntryObject } from '@/tracking'
 import { useTracking } from '@/useTracking'
 import { useEffect, useRef, useState } from 'react'
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -87,11 +81,9 @@ export function TrackPage() {
       mood: entry.getMood(),
       selfPerception: entry.getSelfPerception(),
       energy: entry.getEnergy(),
-      motivation: entry.getMotivation(),
       libido: entry.getLibido(),
       dischargeConsistency: entry.getDischargeConsistency(),
       dischargeAmount: entry.getDischargeAmount(),
-      symptoms: entry.getSymptoms(),
       notes,
     }
   })
@@ -204,31 +196,12 @@ export function TrackPage() {
                             <p className="text-pink-500">Selbstwahrn.: {data.selfPerception}</p>
                           )}
                           {data?.energy && <p className="text-green-500">Energie: {data.energy}</p>}
-                          {data?.motivation && (
-                            <p className="text-amber-500">Motivation: {data.motivation}</p>
-                          )}
                           {data?.libido && <p className="text-orange-500">Libido: {data.libido}</p>}
                           {data?.dischargeConsistency && (
                             <p className="text-cyan-500">Konsistenz: {data.dischargeConsistency}</p>
                           )}
                           {data?.dischargeAmount && (
                             <p className="text-blue-500">Menge: {data.dischargeAmount}</p>
-                          )}
-                          {data?.symptoms?.length > 0 && (
-                            <p className="text-rose-500">
-                              Symptome:{' '}
-                              {data.symptoms
-                                .map((s: string) =>
-                                  s === 'breastTension'
-                                    ? 'Brust'
-                                    : s === 'bloating'
-                                      ? 'Blähung'
-                                      : s === 'headache'
-                                        ? 'Kopf'
-                                        : s
-                                )
-                                .join(', ')}
-                            </p>
                           )}
                           {data?.notes && (
                             <p className="text-gray-500 mt-1 max-w-32 wrap-break-word">
@@ -316,40 +289,8 @@ export function TrackPage() {
                     name="Menge"
                     hide={hiddenLines.includes('dischargeAmount')}
                   />
-                  <Line
-                    type="monotone"
-                    dataKey="motivation"
-                    stroke="#f59e0b"
-                    strokeWidth={2}
-                    dot={{ fill: '#f59e0b', strokeWidth: 0, r: 3 }}
-                    connectNulls
-                    name="Motivation"
-                    hide={hiddenLines.includes('motivation')}
-                  />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
-            {/* Symptom tags row */}
-            <div className="flex gap-1 mt-2 flex-wrap">
-              <span className="text-[9px] text-muted-foreground mr-1">Symptome:</span>
-              {chartData.some((d) => d.symptoms?.includes('breastTension')) && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600">
-                  Brustspannen
-                </span>
-              )}
-              {chartData.some((d) => d.symptoms?.includes('bloating')) && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600">
-                  Blähungen
-                </span>
-              )}
-              {chartData.some((d) => d.symptoms?.includes('headache')) && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600">
-                  Kopfschmerzen
-                </span>
-              )}
-              {!chartData.some((d) => d.symptoms?.length) && (
-                <span className="text-[9px] text-muted-foreground/50">keine</span>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -452,25 +393,9 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
   const libido = entry.getLibido()
   const selfPerception = entry.getSelfPerception()
   const energy = entry.getEnergy()
-  const motivation = entry.getMotivation()
   const dischargeConsistency = entry.getDischargeConsistency()
   const dischargeAmount = entry.getDischargeAmount()
-  const symptoms = entry.getSymptoms()
   const notes = entry.getNotes()
-
-  const symptomOptions: { value: Symptom; label: string }[] = [
-    { value: 'breastTension', label: 'Brustspannen' },
-    { value: 'bloating', label: 'Blähungen' },
-    { value: 'headache', label: 'Kopfschmerzen' },
-  ]
-
-  const toggleSymptom = (symptom: Symptom) => {
-    if (symptoms.includes(symptom)) {
-      onUpdate(entry.removeSymptom(symptom))
-    } else {
-      onUpdate(entry.addSymptom(symptom))
-    }
-  }
 
   return (
     <Card className="bg-white/90 backdrop-blur-sm">
@@ -519,22 +444,6 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
             onValueChange={([value]) => onUpdate(entry.setEnergy(value))}
           />
           <span className="text-sm font-semibold tabular-nums text-center">{energy ?? '-'}</span>
-
-          {/* Motivation row */}
-          <Label htmlFor="motivation-slider" className="text-sm truncate">
-            Motivation
-          </Label>
-          <Slider
-            id="motivation-slider"
-            min={1}
-            max={5}
-            step={1}
-            value={[motivation ?? 3]}
-            onValueChange={([value]) => onUpdate(entry.setMotivation(value))}
-          />
-          <span className="text-sm font-semibold tabular-nums text-center">
-            {motivation ?? '-'}
-          </span>
 
           {/* Libido row */}
           <Label htmlFor="libido-slider" className="text-sm truncate">
@@ -586,30 +495,6 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
           <span className="text-sm font-semibold tabular-nums text-center">
             {dischargeAmount ?? '-'}
           </span>
-        </div>
-
-        {/* Symptoms multi-select */}
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Symptome
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {symptomOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => toggleSymptom(option.value)}
-                className={cn(
-                  'px-3 py-1 text-sm rounded-full border transition-colors',
-                  symptoms.includes(option.value)
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-background border-input hover:bg-muted'
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         <textarea

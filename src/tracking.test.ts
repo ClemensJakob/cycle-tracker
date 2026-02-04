@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  formatDateKey,
-  getDayLabel,
-  makeTrackingEntry,
-  type TrackingEntry,
-  type Symptom,
-} from './tracking'
+import { formatDateKey, getDayLabel, makeTrackingEntry, type TrackingEntry } from './tracking'
 
 describe('tracking domain', () => {
   describe('formatDateKey', () => {
@@ -183,51 +177,6 @@ describe('tracking domain', () => {
       expect(entry.setDischargeAmount(6).getDischargeAmount()).toBe(5)
     })
 
-    it('should allow setting motivation between 1 and 5', () => {
-      const entry = makeTrackingEntry('2026-01-31')
-      const updated = entry.setMotivation(4)
-
-      expect(updated.getMotivation()).toBe(4)
-    })
-
-    it('should clamp motivation values to 1-5 range', () => {
-      const entry = makeTrackingEntry('2026-01-31')
-
-      expect(entry.setMotivation(0).getMotivation()).toBe(1)
-      expect(entry.setMotivation(6).getMotivation()).toBe(5)
-    })
-
-    it('should allow setting symptoms as an array', () => {
-      const entry = makeTrackingEntry('2026-01-31')
-      const symptoms: Symptom[] = ['breastTension', 'bloating']
-      const updated = entry.setSymptoms(symptoms)
-
-      expect(updated.getSymptoms()).toEqual(['breastTension', 'bloating'])
-    })
-
-    it('should allow adding a single symptom', () => {
-      const entry = makeTrackingEntry('2026-01-31')
-      const withOne = entry.addSymptom('headache')
-      const withTwo = withOne.addSymptom('bloating')
-
-      expect(withTwo.getSymptoms()).toEqual(['headache', 'bloating'])
-    })
-
-    it('should not add duplicate symptoms', () => {
-      const entry = makeTrackingEntry('2026-01-31')
-      const withSymptom = entry.addSymptom('headache').addSymptom('headache')
-
-      expect(withSymptom.getSymptoms()).toEqual(['headache'])
-    })
-
-    it('should allow removing a symptom', () => {
-      const entry = makeTrackingEntry('2026-01-31')
-      const withSymptoms = entry.setSymptoms(['breastTension', 'bloating', 'headache'])
-      const removed = withSymptoms.removeSymptom('bloating')
-
-      expect(removed.getSymptoms()).toEqual(['breastTension', 'headache'])
-    })
-
     it('should serialize all new fields to JSON', () => {
       const entry = makeTrackingEntry('2026-01-31')
       const withData = entry
@@ -236,7 +185,6 @@ describe('tracking domain', () => {
         .setEnergy(5)
         .setDischargeConsistency(2)
         .setDischargeAmount(4)
-        .setSymptoms(['breastTension', 'headache'])
 
       const serialized = withData.toJSON()
 
@@ -249,7 +197,6 @@ describe('tracking domain', () => {
         energy: 5,
         dischargeConsistency: 2,
         dischargeAmount: 4,
-        symptoms: ['breastTension', 'headache'],
       })
     })
   })

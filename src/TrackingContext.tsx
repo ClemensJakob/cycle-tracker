@@ -31,9 +31,7 @@ export function TrackingProvider({
             entry.selfPerception,
             entry.energy,
             entry.dischargeConsistency,
-            entry.dischargeAmount,
-            entry.motivation,
-            entry.symptoms
+            entry.dischargeAmount
           )
         }
 

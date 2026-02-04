@@ -5,8 +5,6 @@
  * It follows the Crockford object pattern for immutable domain entities.
  */
 
-export type Symptom = 'breastTension' | 'bloating' | 'headache'
-
 export type TrackingEntry = {
   dateKey: string // Format: YYYY-MM-DD
   mood?: number // 1-5
@@ -16,8 +14,6 @@ export type TrackingEntry = {
   energy?: number // 1-5
   dischargeConsistency?: number // 1-5 (1=glassy, 5=creamy)
   dischargeAmount?: number // 1-5 (1=little, 5=much)
-  motivation?: number // 1-5
-  symptoms?: Symptom[]
 }
 
 export type TrackingEntryObject = {
@@ -29,8 +25,6 @@ export type TrackingEntryObject = {
   getEnergy: () => number | undefined
   getDischargeConsistency: () => number | undefined
   getDischargeAmount: () => number | undefined
-  getMotivation: () => number | undefined
-  getSymptoms: () => Symptom[]
   setMood: (value: number | undefined) => TrackingEntryObject
   setLibido: (value: number | undefined) => TrackingEntryObject
   setNotes: (value: string | undefined) => TrackingEntryObject
@@ -38,10 +32,6 @@ export type TrackingEntryObject = {
   setEnergy: (value: number | undefined) => TrackingEntryObject
   setDischargeConsistency: (value: number | undefined) => TrackingEntryObject
   setDischargeAmount: (value: number | undefined) => TrackingEntryObject
-  setMotivation: (value: number | undefined) => TrackingEntryObject
-  setSymptoms: (value: Symptom[] | undefined) => TrackingEntryObject
-  addSymptom: (symptom: Symptom) => TrackingEntryObject
-  removeSymptom: (symptom: Symptom) => TrackingEntryObject
   toJSON: () => TrackingEntry
 }
 
@@ -63,9 +53,7 @@ export function makeTrackingEntry(
   selfPerception?: number,
   energy?: number,
   dischargeConsistency?: number,
-  dischargeAmount?: number,
-  motivation?: number,
-  symptoms?: Symptom[]
+  dischargeAmount?: number
 ): TrackingEntryObject {
   const state: TrackingEntry = {
     dateKey,
@@ -76,8 +64,6 @@ export function makeTrackingEntry(
     energy,
     dischargeConsistency,
     dischargeAmount,
-    motivation,
-    symptoms,
   }
 
   const rebuild = (updates: Partial<TrackingEntry>) =>
@@ -89,9 +75,7 @@ export function makeTrackingEntry(
       'selfPerception' in updates ? updates.selfPerception : state.selfPerception,
       'energy' in updates ? updates.energy : state.energy,
       'dischargeConsistency' in updates ? updates.dischargeConsistency : state.dischargeConsistency,
-      'dischargeAmount' in updates ? updates.dischargeAmount : state.dischargeAmount,
-      'motivation' in updates ? updates.motivation : state.motivation,
-      'symptoms' in updates ? updates.symptoms : state.symptoms
+      'dischargeAmount' in updates ? updates.dischargeAmount : state.dischargeAmount
     )
 
   return {
@@ -103,8 +87,6 @@ export function makeTrackingEntry(
     getEnergy: () => state.energy,
     getDischargeConsistency: () => state.dischargeConsistency,
     getDischargeAmount: () => state.dischargeAmount,
-    getMotivation: () => state.motivation,
-    getSymptoms: () => state.symptoms ?? [],
 
     setMood: (value: number | undefined) => {
       const clampedValue = value !== undefined ? clamp(value, 1, 5) : undefined
@@ -140,26 +122,6 @@ export function makeTrackingEntry(
       return rebuild({ dischargeAmount: clampedValue })
     },
 
-    setMotivation: (value: number | undefined) => {
-      const clampedValue = value !== undefined ? clamp(value, 1, 5) : undefined
-      return rebuild({ motivation: clampedValue })
-    },
-
-    setSymptoms: (value: Symptom[] | undefined) => {
-      return rebuild({ symptoms: value })
-    },
-
-    addSymptom: (symptom: Symptom) => {
-      const current = state.symptoms ?? []
-      if (current.includes(symptom)) return rebuild({})
-      return rebuild({ symptoms: [...current, symptom] })
-    },
-
-    removeSymptom: (symptom: Symptom) => {
-      const current = state.symptoms ?? []
-      return rebuild({ symptoms: current.filter((s) => s !== symptom) })
-    },
-
     toJSON: () => ({
       dateKey: state.dateKey,
       mood: state.mood,
@@ -169,7 +131,6 @@ export function makeTrackingEntry(
       energy: state.energy,
       dischargeConsistency: state.dischargeConsistency,
       dischargeAmount: state.dischargeAmount,
-      symptoms: state.symptoms,
     }),
   }
 }
