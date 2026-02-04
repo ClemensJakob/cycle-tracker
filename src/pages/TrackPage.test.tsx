@@ -47,7 +47,7 @@ describe('TrackPage', () => {
 
     await waitFor(() => {
       // Form should be visible immediately since today is selected by default
-      expect(screen.getByText('Stimmung')).toBeInTheDocument()
+      expect(screen.getByText('Mood')).toBeInTheDocument()
       expect(screen.getByText('Libido')).toBeInTheDocument()
     })
   })
@@ -77,7 +77,7 @@ describe('TrackPage', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Stimmung')).toBeInTheDocument()
+      expect(screen.getByText('Mood')).toBeInTheDocument()
     })
 
     const sliders = screen.getAllByRole('slider')
@@ -103,7 +103,7 @@ describe('TrackPage', () => {
 
     // Form should still be visible
     await waitFor(() => {
-      expect(screen.getByText('Stimmung')).toBeInTheDocument()
+      expect(screen.getByText('Mood')).toBeInTheDocument()
     })
   })
 
@@ -125,7 +125,7 @@ describe('TrackPage', () => {
 
     await waitFor(() => {
       // Check that form is loaded with the saved values
-      const moodLabel = screen.getByText('Stimmung')
+      const moodLabel = screen.getByText('Mood')
       const libidoLabel = screen.getByText('Libido')
       expect(moodLabel).toBeInTheDocument()
       expect(libidoLabel).toBeInTheDocument()

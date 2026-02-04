@@ -5,11 +5,13 @@ import { cn } from '@/lib/utils'
 import { formatDateKey, getDateDaysAgo, getDayLabel, type TrackingEntryObject } from '@/tracking'
 import { useTracking } from '@/useTracking'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 const VISIBLE_DAYS = 10 // Number of days we can scroll back (not including today)
 
 export function TrackPage() {
+  const { t } = useTranslation()
   const { getEntry, updateEntry, isLoading } = useTracking()
   const todayKey = formatDateKey(new Date())
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
@@ -35,7 +37,7 @@ export function TrackPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('loading')}</p>
       </div>
     )
   }
@@ -50,7 +52,7 @@ export function TrackPage() {
     const hasData = entry.getMood() !== undefined || entry.getLibido() !== undefined
 
     const isYesterday = daysAgo === 1
-    const label = isYesterday ? 'Yesterday' : dayName
+    const label = isYesterday ? t('yesterday') : dayName
 
     return {
       dateKey,
@@ -119,7 +121,7 @@ export function TrackPage() {
 
             {/* Sticky Today card */}
             <DayCard
-              label="Today"
+              label={t('today')}
               dayOfMonth={getDayLabel(new Date()).dayOfMonth}
               isSelected={selectedDateKey === todayKey}
               hasData={todayHasData}
@@ -149,7 +151,7 @@ export function TrackPage() {
         <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-0 h-full">
           <CardContent className="p-3 h-full flex flex-col">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">
-              Last 10 days
+              {t('last_10_days')}
             </p>
             <div className="flex-1 min-h-0">
               <ResponsiveContainer width="100%" height="100%">
@@ -190,18 +192,38 @@ export function TrackPage() {
                       const data = payload[0]?.payload
                       return (
                         <div className="bg-white border border-gray-200 rounded-lg p-2 text-xs shadow-sm">
-                          <p className="font-medium mb-1">Tag {label}</p>
-                          {data?.mood && <p className="text-violet-500">Stimmung: {data.mood}</p>}
-                          {data?.selfPerception && (
-                            <p className="text-pink-500">Selbstwahrn.: {data.selfPerception}</p>
+                          <p className="font-medium mb-1">
+                            {t('day')} {label}
+                          </p>
+                          {data?.mood && (
+                            <p className="text-violet-500">
+                              {t('mood')}: {data.mood}
+                            </p>
                           )}
-                          {data?.energy && <p className="text-green-500">Energie: {data.energy}</p>}
-                          {data?.libido && <p className="text-orange-500">Libido: {data.libido}</p>}
+                          {data?.selfPerception && (
+                            <p className="text-pink-500">
+                              {t('self_perception')}: {data.selfPerception}
+                            </p>
+                          )}
+                          {data?.energy && (
+                            <p className="text-green-500">
+                              {t('energy')}: {data.energy}
+                            </p>
+                          )}
+                          {data?.libido && (
+                            <p className="text-orange-500">
+                              {t('libido')}: {data.libido}
+                            </p>
+                          )}
                           {data?.dischargeConsistency && (
-                            <p className="text-cyan-500">Konsistenz: {data.dischargeConsistency}</p>
+                            <p className="text-cyan-500">
+                              {t('consistency')}: {data.dischargeConsistency}
+                            </p>
                           )}
                           {data?.dischargeAmount && (
-                            <p className="text-blue-500">Menge: {data.dischargeAmount}</p>
+                            <p className="text-blue-500">
+                              {t('amount')}: {data.dischargeAmount}
+                            </p>
                           )}
                           {data?.notes && (
                             <p className="text-gray-500 mt-1 max-w-32 wrap-break-word">
@@ -236,7 +258,7 @@ export function TrackPage() {
                     strokeWidth={2}
                     dot={{ fill: '#8b5cf6', strokeWidth: 0, r: 3 }}
                     connectNulls
-                    name="Stimmung"
+                    name={t('mood')}
                     hide={hiddenLines.includes('mood')}
                   />
                   <Line
@@ -246,7 +268,7 @@ export function TrackPage() {
                     strokeWidth={2}
                     dot={{ fill: '#ec4899', strokeWidth: 0, r: 3 }}
                     connectNulls
-                    name="Selbstwahrn."
+                    name={t('self_perception')}
                     hide={hiddenLines.includes('selfPerception')}
                   />
                   <Line
@@ -256,7 +278,7 @@ export function TrackPage() {
                     strokeWidth={2}
                     dot={{ fill: '#22c55e', strokeWidth: 0, r: 3 }}
                     connectNulls
-                    name="Energie"
+                    name={t('energy')}
                     hide={hiddenLines.includes('energy')}
                   />
                   <Line
@@ -266,7 +288,7 @@ export function TrackPage() {
                     strokeWidth={2}
                     dot={{ fill: '#f97316', strokeWidth: 0, r: 3 }}
                     connectNulls
-                    name="Libido"
+                    name={t('libido')}
                     hide={hiddenLines.includes('libido')}
                   />
                   <Line
@@ -276,7 +298,7 @@ export function TrackPage() {
                     strokeWidth={2}
                     dot={{ fill: '#06b6d4', strokeWidth: 0, r: 3 }}
                     connectNulls
-                    name="Konsistenz"
+                    name={t('consistency')}
                     hide={hiddenLines.includes('dischargeConsistency')}
                   />
                   <Line
@@ -286,7 +308,7 @@ export function TrackPage() {
                     strokeWidth={2}
                     dot={{ fill: '#3b82f6', strokeWidth: 0, r: 3 }}
                     connectNulls
-                    name="Menge"
+                    name={t('amount')}
                     hide={hiddenLines.includes('dischargeAmount')}
                   />
                 </LineChart>
@@ -389,6 +411,7 @@ type TrackingFormProps = {
 }
 
 function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
+  const { t } = useTranslation()
   const mood = entry.getMood()
   const libido = entry.getLibido()
   const selfPerception = entry.getSelfPerception()
@@ -403,7 +426,7 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
         <div className="grid grid-cols-[7rem_1fr_1.5rem] gap-x-3 gap-y-2 items-center">
           {/* Mood row */}
           <Label htmlFor="mood-slider" className="text-sm truncate">
-            Stimmung
+            {t('mood')}
           </Label>
           <Slider
             id="mood-slider"
@@ -417,7 +440,7 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
 
           {/* Self Perception row */}
           <Label htmlFor="self-perception-slider" className="text-sm truncate">
-            Selbstwahrn.
+            {t('self_perception')}
           </Label>
           <Slider
             id="self-perception-slider"
@@ -433,7 +456,7 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
 
           {/* Energy row */}
           <Label htmlFor="energy-slider" className="text-sm truncate">
-            Energie
+            {t('energy')}
           </Label>
           <Slider
             id="energy-slider"
@@ -447,7 +470,7 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
 
           {/* Libido row */}
           <Label htmlFor="libido-slider" className="text-sm truncate">
-            Libido
+            {t('libido')}
           </Label>
           <Slider
             id="libido-slider"
@@ -461,12 +484,12 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
 
           {/* Discharge section header - spans all columns */}
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide col-span-3 mt-1">
-            Ausfluss
+            {t('discharge')}
           </p>
 
           {/* Discharge consistency row */}
           <Label htmlFor="discharge-consistency-slider" className="text-sm truncate">
-            Glasig→Cremig
+            {t('discharge_glassy_to_creamy')}
           </Label>
           <Slider
             id="discharge-consistency-slider"
@@ -482,7 +505,7 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
 
           {/* Discharge amount row */}
           <Label htmlFor="discharge-amount-slider" className="text-sm truncate">
-            Wenig→Viel
+            {t('discharge_little_to_much')}
           </Label>
           <Slider
             id="discharge-amount-slider"
@@ -498,7 +521,7 @@ function TrackingForm({ entry, onUpdate }: TrackingFormProps) {
         </div>
 
         <textarea
-          placeholder="Notizen..."
+          placeholder={t('notes_placeholder')}
           value={notes ?? ''}
           onChange={(e) => onUpdate(entry.setNotes(e.target.value || undefined))}
           className="w-full text-base p-2 rounded-md border border-input bg-background resize-none h-12 focus:outline-none focus:ring-2 focus:ring-ring"

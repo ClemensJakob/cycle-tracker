@@ -1,0 +1,17 @@
+{
+  "amount": "Amount",
+  "consistency": "Consistency",
+  "day": "Day",
+  "discharge": "Discharge",
+  "discharge_glassy_to_creamy": "Glassy→Creamy",
+  "discharge_little_to_much": "Little→Much",
+  "energy": "Energy",
+  "last_10_days": "Last 10 days",
+  "libido": "Libido",
+  "loading": "Loading...",
+  "mood": "Mood",
+  "notes_placeholder": "Notes...",
+  "self_perception": "Self Perc.",
+  "today": "Today",
+  "yesterday": "Yesterday"
+}

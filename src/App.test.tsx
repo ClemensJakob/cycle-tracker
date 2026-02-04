@@ -40,8 +40,8 @@ describe('App', () => {
     render(<App />)
 
     await waitFor(() => {
-      // Form labels are in German
-      expect(screen.getByText('Stimmung')).toBeInTheDocument()
+      // Form labels are in English
+      expect(screen.getByText('Mood')).toBeInTheDocument()
       expect(screen.getByText('Libido')).toBeInTheDocument()
     })
   })
