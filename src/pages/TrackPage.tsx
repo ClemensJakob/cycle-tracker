@@ -1,14 +1,26 @@
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
+import { Toggle } from '@/components/ui/toggle'
 import { cn } from '@/lib/utils'
-import { formatDateKey, getDateDaysAgo, getDayLabel, type TrackingEntryObject } from '@/tracking'
+import {
+  computeRollingMean,
+  formatDateKey,
+  formatDateRange,
+  getDateDaysAgo,
+  getDayLabel,
+  type TrackingEntryObject,
+} from '@/tracking'
 import { useTracking } from '@/useTracking'
-import { useEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
-const VISIBLE_DAYS = 10 // Number of days we can scroll back (not including today)
+const VISIBLE_DAYS = 10 // Number of days visible in the day card scroller
+const CHART_DAYS = 30 // Number of days shown in the chart
+const ROLLING_WINDOW = 3 // Window size for rolling mean
 
 export function TrackPage() {
   const { t } = useTranslation()
@@ -16,6 +28,8 @@ export function TrackPage() {
   const todayKey = formatDateKey(new Date())
   const [selectedDateKey, setSelectedDateKey] = useState<string>('')
   const [hiddenLines, setHiddenLines] = useState<string[]>([])
+  const [chartOffset, setChartOffset] = useState(0) // 0 = latest period, 1 = previous 30 days, etc.
+  const [showRollingMean, setShowRollingMean] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const handleLegendClick = (dataKey: string) => {
@@ -33,6 +47,67 @@ export function TrackPage() {
     const timer = setTimeout(() => setSelectedDateKey(todayKey), 50)
     return () => clearTimeout(timer)
   }, [isLoading, todayKey])
+
+  // Chart date range based on offset
+  const chartEndDaysAgo = chartOffset * CHART_DAYS
+  const chartStartDaysAgo = chartEndDaysAgo + CHART_DAYS - 1
+  const chartStartDate = getDateDaysAgo(chartStartDaysAgo)
+  const chartEndDate = getDateDaysAgo(chartEndDaysAgo)
+  const dateRangeLabel = formatDateRange(chartStartDate, chartEndDate)
+  const isLatestPeriod = chartOffset === 0
+
+  // Prepare chart data - 30 days for the current offset
+  const rawChartData = useMemo(
+    () =>
+      Array.from({ length: CHART_DAYS }, (_, i) => {
+        const daysAgo = chartStartDaysAgo - i
+        const date = getDateDaysAgo(daysAgo)
+        const dateKey = formatDateKey(date)
+        const { dayOfMonth } = getDayLabel(date)
+        const entry = getEntry(dateKey)
+        const notes = entry.getNotes()
+
+        return {
+          day: dayOfMonth.toString(),
+          mood: entry.getMood(),
+          selfPerception: entry.getSelfPerception(),
+          energy: entry.getEnergy(),
+          libido: entry.getLibido(),
+          dischargeConsistency: entry.getDischargeConsistency(),
+          dischargeAmount: entry.getDischargeAmount(),
+          notes,
+        }
+      }),
+    [chartStartDaysAgo, getEntry]
+  )
+
+  // Apply rolling mean if toggled
+  const chartData = useMemo(() => {
+    if (!showRollingMean) return rawChartData
+
+    const fields = [
+      'mood',
+      'selfPerception',
+      'energy',
+      'libido',
+      'dischargeConsistency',
+      'dischargeAmount',
+    ] as const
+    const means: Record<string, (number | undefined)[]> = {}
+    for (const field of fields) {
+      means[field] = computeRollingMean(rawChartData, field, ROLLING_WINDOW)
+    }
+
+    return rawChartData.map((item, index) => ({
+      ...item,
+      mood: means.mood[index],
+      selfPerception: means.selfPerception[index],
+      energy: means.energy[index],
+      libido: means.libido[index],
+      dischargeConsistency: means.dischargeConsistency[index],
+      dischargeAmount: means.dischargeAmount[index],
+    }))
+  }, [rawChartData, showRollingMean])
 
   if (isLoading) {
     return (
@@ -68,27 +143,6 @@ export function TrackPage() {
 
   const selectedEntry = getEntry(selectedDateKey)
   const isFormOpen = selectedDateKey !== ''
-
-  // Prepare chart data - last 10 days including today
-  const chartData = Array.from({ length: VISIBLE_DAYS + 1 }, (_, i) => {
-    const daysAgo = VISIBLE_DAYS - i
-    const date = getDateDaysAgo(daysAgo)
-    const dateKey = formatDateKey(date)
-    const { dayOfMonth } = getDayLabel(date)
-    const entry = getEntry(dateKey)
-    const notes = entry.getNotes()
-
-    return {
-      day: dayOfMonth.toString(),
-      mood: entry.getMood(),
-      selfPerception: entry.getSelfPerception(),
-      energy: entry.getEnergy(),
-      libido: entry.getLibido(),
-      dischargeConsistency: entry.getDischargeConsistency(),
-      dischargeAmount: entry.getDischargeAmount(),
-      notes,
-    }
-  })
 
   const closeForm = () => setSelectedDateKey('')
 
@@ -150,9 +204,41 @@ export function TrackPage() {
       <div className="h-[60vh] px-3 py-3">
         <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-0 h-full">
           <CardContent className="p-3 h-full flex flex-col">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">
-              {t('last_10_days')}
-            </p>
+            {/* Chart header: navigation + date range + rolling mean toggle */}
+            <div className="flex items-center justify-between mb-1">
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => setChartOffset((prev) => prev + 1)}
+                aria-label="Previous 30 days"
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+                  {dateRangeLabel}
+                </p>
+                <Toggle
+                  variant="outline"
+                  size="sm"
+                  pressed={showRollingMean}
+                  onPressedChange={setShowRollingMean}
+                  aria-label="Toggle rolling mean"
+                  className="h-5 px-1.5 text-[9px]"
+                >
+                  {showRollingMean ? `Ø3` : t('detailed')}
+                </Toggle>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => setChartOffset((prev) => Math.max(0, prev - 1))}
+                disabled={isLatestPeriod}
+                aria-label="Next 30 days"
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
             <div className="flex-1 min-h-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { formatDateKey, getDayLabel, makeTrackingEntry, type TrackingEntry } from './tracking'
+import {
+  computeRollingMean,
+  formatDateKey,
+  formatDateRange,
+  getDayLabel,
+  makeTrackingEntry,
+  type TrackingEntry,
+} from './tracking'
 
 describe('tracking domain', () => {
   describe('formatDateKey', () => {
@@ -20,6 +27,96 @@ describe('tracking domain', () => {
       const label = getDayLabel(date)
       expect(label.dayName).toBe('Sat')
       expect(label.dayOfMonth).toBe(31)
+    })
+  })
+
+  describe('formatDateRange', () => {
+    it('should format a date range as DD.MM. - DD.MM.', () => {
+      const start = new Date(2026, 0, 13) // January 13
+      const end = new Date(2026, 1, 11) // February 11
+      expect(formatDateRange(start, end)).toBe('13.01. – 11.02.')
+    })
+
+    it('should handle same-month ranges', () => {
+      const start = new Date(2026, 0, 1)
+      const end = new Date(2026, 0, 30)
+      expect(formatDateRange(start, end)).toBe('01.01. – 30.01.')
+    })
+
+    it('should handle year-crossing ranges', () => {
+      const start = new Date(2025, 11, 15) // December 15
+      const end = new Date(2026, 0, 13) // January 13
+      expect(formatDateRange(start, end)).toBe('15.12. – 13.01.')
+    })
+  })
+
+  describe('computeRollingMean', () => {
+    it('should compute 3-day rolling mean for a numeric field', () => {
+      const data = [
+        { day: '1', mood: 2 },
+        { day: '2', mood: 4 },
+        { day: '3', mood: 3 },
+        { day: '4', mood: 5 },
+        { day: '5', mood: 1 },
+      ]
+
+      const result = computeRollingMean(data, 'mood', 3)
+
+      // Day 1: only 1 value => 2
+      expect(result[0]).toBe(2)
+      // Day 2: avg(2,4) => 3
+      expect(result[1]).toBe(3)
+      // Day 3: avg(2,4,3) => 3
+      expect(result[2]).toBe(3)
+      // Day 4: avg(4,3,5) => 4
+      expect(result[3]).toBe(4)
+      // Day 5: avg(3,5,1) => 3
+      expect(result[4]).toBe(3)
+    })
+
+    it('should skip undefined values in rolling window', () => {
+      const data = [
+        { day: '1', mood: undefined },
+        { day: '2', mood: 4 },
+        { day: '3', mood: undefined },
+        { day: '4', mood: 2 },
+      ]
+
+      const result = computeRollingMean(data, 'mood', 3)
+
+      // Day 1: no values => undefined
+      expect(result[0]).toBeUndefined()
+      // Day 2: only 4 => 4
+      expect(result[1]).toBe(4)
+      // Day 3: only 4 => 4
+      expect(result[2]).toBe(4)
+      // Day 4: avg(4,2) => 3
+      expect(result[3]).toBe(3)
+    })
+
+    it('should return all undefined for fully empty data', () => {
+      const data = [
+        { day: '1', mood: undefined },
+        { day: '2', mood: undefined },
+      ]
+
+      const result = computeRollingMean(data, 'mood', 3)
+
+      expect(result[0]).toBeUndefined()
+      expect(result[1]).toBeUndefined()
+    })
+
+    it('should round to one decimal place', () => {
+      const data = [
+        { day: '1', mood: 1 },
+        { day: '2', mood: 2 },
+        { day: '3', mood: 3 },
+      ]
+
+      const result = computeRollingMean(data, 'mood', 3)
+
+      // avg(1,2,3) = 2
+      expect(result[2]).toBe(2)
     })
   })
 

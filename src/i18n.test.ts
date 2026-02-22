@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import i18n from './i18n'
 
 describe('i18n', () => {
@@ -37,7 +37,7 @@ describe('i18n', () => {
   })
 
   it('should translate chart labels', () => {
-    expect(i18n.t('last_10_days')).toBe('Letzte 10 Tage')
+    expect(i18n.t('detailed')).toBe('Detail')
     expect(i18n.t('self_perception')).toBe('Selbstwahrn.')
     expect(i18n.t('consistency')).toBe('Konsistenz')
     expect(i18n.t('amount')).toBe('Menge')

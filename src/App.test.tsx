@@ -31,8 +31,9 @@ describe('App', () => {
     render(<App />)
 
     await waitFor(() => {
-      // Check for chart section header
-      expect(screen.getByText('Last 10 days')).toBeInTheDocument()
+      // Check for chart navigation buttons
+      expect(screen.getByLabelText('Previous 30 days')).toBeInTheDocument()
+      expect(screen.getByLabelText('Next 30 days')).toBeInTheDocument()
     })
   })
 

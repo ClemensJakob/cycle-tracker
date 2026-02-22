@@ -172,3 +172,40 @@ export function parseDateKey(dateKey: string): Date {
   const [year, month, day] = dateKey.split('-').map(Number)
   return new Date(year, month - 1, day)
 }
+
+/**
+ * Format a date range as "DD.MM. – DD.MM."
+ */
+export function formatDateRange(start: Date, end: Date): string {
+  const fmt = (d: Date) => {
+    const day = String(d.getDate()).padStart(2, '0')
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    return `${day}.${month}.`
+  }
+  return `${fmt(start)} \u2013 ${fmt(end)}`
+}
+
+/**
+ * Compute a rolling mean over chart data for a given numeric field.
+ * Uses a backward-looking window of `windowSize` entries.
+ * Skips undefined values in the window; returns undefined if the window has no values.
+ * Results are rounded to one decimal place.
+ */
+export function computeRollingMean<T extends Record<string, unknown>>(
+  data: T[],
+  field: keyof T,
+  windowSize: number
+): (number | undefined)[] {
+  return data.map((_, index) => {
+    const start = Math.max(0, index - windowSize + 1)
+    const windowSlice = data.slice(start, index + 1)
+    const values = windowSlice
+      .map((item): unknown => item[field])
+      .filter((v): v is number => typeof v === 'number')
+
+    if (values.length === 0) return undefined
+
+    const sum = values.reduce((acc, val) => acc + val, 0)
+    return Math.round((sum / values.length) * 10) / 10
+  })
+}
